@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ecco's girl — Discord Bot</title>
+    <meta name="description" content="ecco's girl — a powerful, cute, and feature-rich Discord bot. Moderation, music, fun, Roblox tools and more.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Animated background -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
+
+    <!-- Particle canvas -->
+    <canvas id="particles" aria-hidden="true"></canvas>
+
+    <!-- ─── NAVBAR ─── -->
+    <header id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <img src="assets/pfp.jpg" alt="ecco's girl" class="nav-pfp" onerror="this.style.display='none'">
+                <span>ecco's <em>girl</em></span>
+            </a>
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#status">Status</a>
+                <a href="#commands">Commands</a>
+                <a href="#announcements">Updates</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="#invite" class="btn btn-outline">Invite</a>
+                <a href="https://discord.gg/" target="_blank" class="btn btn-primary">Discord</a>
+            </div>
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <!-- Mobile menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="#features">Features</a>
+            <a href="#status">Status</a>
+            <a href="#commands">Commands</a>
+            <a href="#announcements">Updates</a>
+            <a href="#invite" class="btn btn-primary w-full">Invite Bot</a>
+        </div>
+    </header>
+
+    <!-- ─── HERO ─── -->
+    <section class="hero" id="hero">
+        <div class="hero-inner container">
+            <div class="hero-text">
+                <div class="hero-badge">✨ v2.0 — Now Live</div>
+                <h1>Meet <span class="gradient-text">ecco's girl</span></h1>
+                <p class="hero-desc">A cute, powerful, and endlessly useful Discord bot. From Roblox exploit tracking to moderation, music, economy, and more — ecco's girl does it all.</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-num" data-count="4200">0</span>
+                        <span class="stat-label">Servers</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num" data-count="93000">0</span>
+                        <span class="stat-label">Users Reached</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num" data-count="99">0</span><span class="stat-pct">%</span>
+                        <span class="stat-label">Uptime</span>
+                    </div>
+                </div>
+                <div class="hero-btns">
+                    <a href="#invite" class="btn btn-primary btn-lg pulse-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                        Add to Discord
+                    </a>
+                    <a href="#features" class="btn btn-ghost btn-lg">See Features →</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="pfp-ring">
+                    <div class="pfp-glow"></div>
+                    <img src="assets/pfp.jpg" alt="ecco's girl bot avatar" class="hero-pfp" onerror="this.parentElement.classList.add('pfp-fallback')">
+                    <div class="pfp-status-dot"></div>
+                </div>
+                <!-- Floating info cards -->
+                <div class="float-card card-top">
+                    <span class="fc-icon">⚡</span>
+                    <div>
+                        <div class="fc-title">Ultra Fast</div>
+                        <div class="fc-sub">&lt;50ms response</div>
+                    </div>
+                </div>
+                <div class="float-card card-bot">
+                    <span class="fc-icon">🛡️</span>
+                    <div>
+                        <div class="fc-title">Active Mods</div>
+                        <div class="fc-sub">Auto-mod enabled</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-hint">
+            <div class="scroll-dot"></div>
+        </div>
+    </section>
+
+    <!-- ─── FEATURES ─── -->
+    <section id="features" class="section">
+        <div class="container">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">Everything your server needs</h2>
+            <p class="section-sub">15 powerful modules, fully configurable per-server. No premium paywall — everything is free.</p>
+
+            <div class="features-grid">
+
+                <div class="feature-card card-glow-pink">
+                    <div class="fc-emoji">🔧</div>
+                    <h3>Moderation Suite</h3>
+                    <p>Ban, kick, mute, warn, timeout, and purge messages with full audit logs. AutoMod with word filters, raid protection, and anti-spam.</p>
+                    <div class="fc-tags"><span>auto-mod</span><span>audit log</span><span>raid shield</span></div>
+                </div>
+
+                <div class="feature-card card-glow-purple">
+                    <div class="fc-emoji">🎮</div>
+                    <h3>Roblox Status Tracker</h3>
+                    <p>Real-time exploit and software status pulled live from WEAO. Get pinged in your server the moment a tool goes online or offline.</p>
+                    <div class="fc-tags"><span>live status</span><span>auto-ping</span><span>WEAO API</span></div>
+                </div>
+
+                <div class="feature-card card-glow-blue">
+                    <div class="fc-emoji">🎵</div>
+                    <h3>Music Player</h3>
+                    <p>Crystal-clear audio from YouTube, Spotify, and SoundCloud. Queue management, 24/7 mode, bass boost, nightcore, and custom playlists.</p>
+                    <div class="fc-tags"><span>YouTube</span><span>Spotify</span><span>queue</span></div>
+                </div>
+
+                <div class="feature-card card-glow-green">
+                    <div class="fc-emoji">💰</div>
+                    <h3>Economy System</h3>
+                    <p>Full coin-based economy with daily rewards, gambling minigames, leaderboards, shop, robbery, and server-wide events.</p>
+                    <div class="fc-tags"><span>coins</span><span>shop</span><span>leaderboard</span></div>
+                </div>
+
+                <div class="feature-card card-glow-yellow">
+                    <div class="fc-emoji">🎲</div>
+                    <h3>Fun & Games</h3>
+                    <p>Trivia, word games, truth or dare, 8ball, counting, rock-paper-scissors, and 20+ interactive minigames to keep your community active.</p>
+                    <div class="fc-tags"><span>trivia</span><span>minigames</span><span>social</span></div>
+                </div>
+
+                <div class="feature-card card-glow-pink">
+                    <div class="fc-emoji">📊</div>
+                    <h3>Server Analytics</h3>
+                    <p>Beautiful embed dashboards showing member growth, message activity, top channels, most active users, and join/leave heatmaps.</p>
+                    <div class="fc-tags"><span>graphs</span><span>heatmaps</span><span>insights</span></div>
+                </div>
+
+                <div class="feature-card card-glow-purple">
+                    <div class="fc-emoji">🎭</div>
+                    <h3>Role Management</h3>
+                    <p>Reaction roles, button roles, select-menu roles, auto-roles on join, temp roles, role rewards tied to leveling or economy milestones.</p>
+                    <div class="fc-tags"><span>reaction roles</span><span>button roles</span><span>autorole</span></div>
+                </div>
+
+                <div class="feature-card card-glow-blue">
+                    <div class="fc-emoji">📈</div>
+                    <h3>Leveling & XP</h3>
+                    <p>Fully customizable XP system with rank cards, level-up notifications, role rewards, and a global leaderboard across all servers.</p>
+                    <div class="fc-tags"><span>xp</span><span>rank card</span><span>rewards</span></div>
+                </div>
+
+                <div class="feature-card card-glow-green">
+                    <div class="fc-emoji">🔔</div>
+                    <h3>Smart Notifications</h3>
+                    <p>Scheduled announcements, birthday shoutouts, Twitch/YouTube live alerts, and custom webhook-powered event pings.</p>
+                    <div class="fc-tags"><span>birthdays</span><span>Twitch alerts</span><span>webhooks</span></div>
+                </div>
+
+                <div class="feature-card card-glow-yellow">
+                    <div class="fc-emoji">🤖</div>
+                    <h3>AI Chat Companion</h3>
+                    <p>Mention ecco's girl to start a conversation powered by AI. Context-aware responses, personality modes, and image generation.</p>
+                    <div class="fc-tags"><span>AI chat</span><span>image gen</span><span>personality</span></div>
+                </div>
+
+                <div class="feature-card card-glow-pink">
+                    <div class="fc-emoji">🎟️</div>
+                    <h3>Ticket System</h3>
+                    <p>Professional support ticket system with categories, claimed staff routing, transcripts saved to logs, and close-reason prompts.</p>
+                    <div class="fc-tags"><span>support</span><span>transcripts</span><span>staff routing</span></div>
+                </div>
+
+                <div class="feature-card card-glow-purple">
+                    <div class="fc-emoji">🎉</div>
+                    <h3>Giveaways</h3>
+                    <p>Fully automated giveaways with role requirements, bonus entries, duration timers, reroll support, and multi-winner draws.</p>
+                    <div class="fc-tags"><span>timed</span><span>multi-winner</span><span>reroll</span></div>
+                </div>
+
+                <div class="feature-card card-glow-blue">
+                    <div class="fc-emoji">📝</div>
+                    <h3>Custom Commands</h3>
+                    <p>Create slash commands and text commands unique to your server with variable substitution, cooldowns, and permission gates.</p>
+                    <div class="fc-tags"><span>slash cmds</span><span>cooldowns</span><span>permissions</span></div>
+                </div>
+
+                <div class="feature-card card-glow-green">
+                    <div class="fc-emoji">🔐</div>
+                    <h3>Verification Gate</h3>
+                    <p>CAPTCHA verification, button-click verification, phone/email verification, and anti-bot filters to keep your server safe.</p>
+                    <div class="fc-tags"><span>captcha</span><span>anti-bot</span><span>phone verify</span></div>
+                </div>
+
+                <div class="feature-card card-glow-yellow">
+                    <div class="fc-emoji">🌐</div>
+                    <h3>Translator</h3>
+                    <p>Auto-translate messages between 50+ languages in real time. Set your server's default language or translate per-user.</p>
+                    <div class="fc-tags"><span>50+ langs</span><span>auto-translate</span><span>per-user</span></div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── SOFTWARE STATUS ─── -->
+    <section id="status" class="section">
+        <div class="container">
+            <div class="section-label">Live Status</div>
+            <h2 class="section-title">Roblox Software Status</h2>
+            <p class="section-sub">Real-time exploit and tool statuses, automatically fetched from the WEAO API. Updates every 60 seconds.</p>
+
+            <div class="status-toolbar">
+                <div class="status-legend">
+                    <span class="leg online">● Online</span>
+                    <span class="leg offline">● Offline</span>
+                    <span class="leg partial">● Partial</span>
+                    <span class="leg unknown">● Unknown</span>
+                </div>
+                <div class="status-last-update">
+                    Last updated: <span id="lastUpdated">fetching...</span>
+                    <button class="refresh-btn" id="refreshBtn" title="Refresh statuses">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="status-grid" id="statusGrid">
+                <!-- Cards rendered by JS -->
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+                <div class="status-skeleton"></div>
+            </div>
+
+            <div class="status-source">
+                Data sourced from <a href="https://whatexpsare.online" target="_blank" rel="noopener">WhatExpsAre.Online</a> via the public WEAO API.
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── COMMANDS ─── -->
+    <section id="commands" class="section">
+        <div class="container">
+            <div class="section-label">Commands</div>
+            <h2 class="section-title">Popular commands</h2>
+            <p class="section-sub">Use <code>/help</code> in Discord for a full list. Here's a taste of what ecco's girl can do.</p>
+
+            <div class="cmd-filter-bar">
+                <button class="cmd-filter active" data-cat="all">All</button>
+                <button class="cmd-filter" data-cat="mod">Moderation</button>
+                <button class="cmd-filter" data-cat="fun">Fun</button>
+                <button class="cmd-filter" data-cat="roblox">Roblox</button>
+                <button class="cmd-filter" data-cat="music">Music</button>
+                <button class="cmd-filter" data-cat="utility">Utility</button>
+            </div>
+
+            <div class="cmd-table-wrap">
+                <table class="cmd-table">
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cmdTableBody">
+                        <!-- Rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── ANNOUNCEMENTS ─── -->
+    <section id="announcements" class="section">
+        <div class="container">
+            <div class="section-label">Updates</div>
+            <h2 class="section-title">Announcements & Updates</h2>
+            <p class="section-sub">Stay up to date with new features, fixes, and bot news. All text — no image spam.</p>
+
+            <div class="announcements-list" id="announcementsList">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── INVITE CTA ─── -->
+    <section id="invite" class="section cta-section">
+        <div class="container cta-inner">
+            <div class="cta-pfp-wrap">
+                <img src="assets/pfp.jpg" alt="ecco's girl" class="cta-pfp" onerror="this.style.display='none'">
+            </div>
+            <h2>Ready to add <span class="gradient-text">ecco's girl</span>?</h2>
+            <p>Join thousands of servers already using ecco's girl. Free forever, no credit card required.</p>
+            <div class="cta-btns">
+                <a href="https://discord.com/oauth2/authorize" target="_blank" class="btn btn-primary btn-xl pulse-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                    Invite ecco's girl
+                </a>
+                <a href="https://discord.gg/" target="_blank" class="btn btn-outline btn-xl">Join Support Server</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer>
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <img src="assets/pfp.jpg" alt="ecco's girl" class="footer-pfp" onerror="this.style.display='none'">
+                <div>
+                    <div class="footer-name">ecco's girl</div>
+                    <div class="footer-tagline">Your server's best friend 💕</div>
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#status">Status</a>
+                <a href="#commands">Commands</a>
+                <a href="#announcements">Updates</a>
+                <a href="#invite">Invite</a>
+            </div>
+            <div class="footer-copy">© 2026 ecco's girl. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

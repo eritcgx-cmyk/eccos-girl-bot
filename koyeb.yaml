@@ -1,0 +1,14 @@
+type: web
+name: eccos-girl-bot
+build:
+  type: docker
+routes:
+  - path: /
+    port: 8080
+env:
+  - key: DISCORD_TOKEN
+    value: ${DISCORD_TOKEN}
+  - key: CLIENT_ID
+    value: ${CLIENT_ID}
+  - key: PORT
+    value: "8080"

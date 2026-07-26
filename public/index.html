@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ecco's girl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <!-- top bar -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="site-logo">
+                <img src="/pfp.jpg" alt="" class="logo-pfp" onerror="this.style.display='none'">
+                ecco's <span>girl</span>
+            </a>
+            <nav>
+                <a href="#status">status</a>
+                <a href="#commands">commands</a>
+                <a href="#news">news</a>
+                <a href="/invite" class="nav-invite" target="_blank">+ add to server</a>
+            </nav>
+            <div class="user-area" id="userArea">
+                <!-- filled by JS -->
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- hero -->
+        <section class="hero">
+            <img src="/pfp.jpg" alt="ecco's girl" class="hero-img" onerror="this.style.display='none'">
+            <div class="hero-text">
+                <h1>ecco's <em>girl</em></h1>
+                <p>a discord bot for roblox exploit tracking, moderation, fun stuff, and more. made with 💕</p>
+                <div class="hero-btns">
+                    <a href="/invite" target="_blank" class="btn-main">add to your server</a>
+                    <a href="https://discord.gg/" target="_blank" class="btn-ghost">support server</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- status -->
+        <section id="status" class="section">
+            <div class="section-head">
+                <h2>executor status</h2>
+                <div class="status-meta">
+                    <span id="lastUpdate">loading...</span>
+                    <button id="refreshBtn" title="refresh">↻</button>
+                </div>
+            </div>
+
+            <div class="status-legend">
+                <span class="dot online"></span> online &nbsp;
+                <span class="dot offline"></span> offline &nbsp;
+                <span class="dot partial"></span> partial &nbsp;
+                <span class="dot unknown"></span> unknown
+            </div>
+
+            <div class="status-grid" id="statusGrid">
+                <!-- filled by JS -->
+                <div class="skel"></div>
+                <div class="skel"></div>
+                <div class="skel"></div>
+                <div class="skel"></div>
+                <div class="skel"></div>
+                <div class="skel"></div>
+            </div>
+
+            <p class="status-note">data from <a href="https://whatexpsare.online" target="_blank">weao.xyz</a> · refreshes every 60s</p>
+        </section>
+
+        <!-- commands -->
+        <section id="commands" class="section">
+            <h2>commands</h2>
+            <div class="cmd-list">
+                <div class="cmd-group">
+                    <div class="cmd-group-label">🔴 roblox</div>
+                    <div class="cmd-row"><code>/status</code><span>check a specific executor</span></div>
+                    <div class="cmd-row"><code>/statusall</code><span>show all 6 tracked executors</span></div>
+                </div>
+                <div class="cmd-group">
+                    <div class="cmd-group-label">🛡️ moderation</div>
+                    <div class="cmd-row"><code>/ban</code><span>ban a member with reason</span></div>
+                    <div class="cmd-row"><code>/kick</code><span>kick a member</span></div>
+                    <div class="cmd-row"><code>/purge</code><span>bulk delete messages (1–100)</span></div>
+                </div>
+                <div class="cmd-group">
+                    <div class="cmd-group-label">🎲 fun</div>
+                    <div class="cmd-row"><code>/8ball</code><span>ask the magic 8ball anything</span></div>
+                    <div class="cmd-row"><code>/coinflip</code><span>heads or tails</span></div>
+                    <div class="cmd-row"><code>/help</code><span>full command list</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- news / announcements -->
+        <section id="news" class="section">
+            <h2>news</h2>
+            <div class="news-list" id="newsList">
+                <!-- filled by JS -->
+            </div>
+        </section>
+
+        <!-- invite CTA -->
+        <section class="cta-block">
+            <img src="/pfp.jpg" alt="" class="cta-img" onerror="this.style.display='none'">
+            <div>
+                <h3>want ecco's girl in your server?</h3>
+                <p>free, no bs, just click below.</p>
+            </div>
+            <a href="/invite" target="_blank" class="btn-main">add to server →</a>
+        </section>
+    </main>
+
+    <footer>
+        <span>ecco's girl · 2026</span>
+        <a href="/invite" target="_blank">invite</a>
+        <a href="https://discord.gg/" target="_blank">discord</a>
+        <button id="logoutBtn" class="logout-link">logout</button>
+    </footer>
+
+    <script src="/app.js"></script>
+</body>
+</html>

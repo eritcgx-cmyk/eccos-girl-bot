@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: eccos-girl-bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: PORT
+        value: 8080
+      - key: STATUS_API_URL
+        value: https://whatexpsare.online/api/status

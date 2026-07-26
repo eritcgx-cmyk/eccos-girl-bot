@@ -1,0 +1,24 @@
+{
+  "name": "eccos-girl-bot",
+  "version": "2.0.0",
+  "description": "ecco's girl — Discord bot + website",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "deploy-commands": "node src/deploy-commands.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "@discordjs/rest": "^2.4.0",
+    "discord-api-types": "^0.37.97",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5"
+  }
+}
