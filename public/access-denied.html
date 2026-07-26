@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied — ecco's girl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0d0d12;
+            color: #e8e0f0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .denied-wrap {
+            width: 100%;
+            max-width: 440px;
+            padding: 32px 28px;
+            background: #13111c;
+            border: 1px solid #ed4245;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ed4245;
+            margin-bottom: 16px;
+        }
+
+        .badge-denied {
+            display: inline-block;
+            background: rgba(237,66,69,0.15);
+            color: #ed4245;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #f0e8ff;
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: #7a6e8a;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .user-id-box {
+            background: #1a1625;
+            border: 1px solid #22203a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #c467ff;
+            margin-bottom: 24px;
+            word-break: break-all;
+        }
+
+        .logout-btn {
+            display: inline-block;
+            background: #22203a;
+            color: #e8e0f0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: background 0.15s;
+        }
+        .logout-btn:hover { background: #3d3555; }
+    </style>
+</head>
+<body>
+    <div class="denied-wrap">
+        <span class="badge-denied">Access Denied</span>
+        <div id="userInfo">
+            <img src="/pfp.jpg" alt="" class="user-avatar" id="deniedAvatar">
+            <h1 id="deniedUsername">Account Not Whitelisted</h1>
+        </div>
+        <p>Your Discord account does not have permission to access the website or control dashboard. Contact an administrator to add your Discord User ID to the whitelist.</p>
+
+        <div class="user-id-box" id="deniedId">Discord User ID: Loading...</div>
+
+        <button onclick="logout()" class="logout-btn">Log Out & Try Another Account</button>
+    </div>
+
+    <script>
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/api/me');
+                const data = await res.json();
+                if (data.discordUser) {
+                    document.getElementById('deniedAvatar').src = data.discordUser.avatar;
+                    document.getElementById('deniedUsername').textContent = data.discordUser.username;
+                    document.getElementById('deniedId').textContent = 'Discord User ID: ' + data.discordUser.id;
+                }
+            } catch {}
+        }
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+        loadUserInfo();
+    </script>
+</body>
+</html>

@@ -1,10 +1,11 @@
-// src/server.js — Express web server with Control Dashboard & OAuth
+// src/server.js — Express Web Server with Discord OAuth Gate & Whitelist
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const { fetchExploitStatuses } = require('./status');
 const { readData, writeData } = require('./database/db');
-const { getEmojiRules, setEmojiRules, getStatusChannels, syncStatusChannels } = require('./status-channels');
+const { getEmojiRules, setEmojiRules, syncStatusChannels } = require('./status-channels');
+const { getWhitelistedUsers, isWhitelisted, addWhitelist, removeWhitelist } = require('./whitelist');
 const { getClient } = require('./bot');
 
 const app = express();
@@ -22,54 +23,59 @@ app.use(session({
     }
 }));
 
-// ── Middleware: check password ─────────────────────────────────────
-function requireAuth(req, res, next) {
+// ── Middleware: Discord OAuth & Whitelist Gate ─────────────────────
+function requireDiscordAuth(req, res, next) {
     const exempt = [
-        '/api/verify-password',
-        '/api/status',
+        '/login.html',
+        '/access-denied.html',
         '/auth/discord',
         '/auth/discord/callback',
-        '/invite'
+        '/api/me',
+        '/invite',
+        '/pfp.jpg',
+        '/style.css'
     ];
+
     if (exempt.some(e => req.path.startsWith(e))) return next();
 
-    const ext = path.extname(req.path);
-    if (ext && ext !== '.html') return next();
-
-    if (req.path.startsWith('/api/')) {
-        if (!req.session.authenticated) {
+    // Check if logged in with Discord
+    if (!req.session.discordUser) {
+        if (req.path.startsWith('/api/')) {
             return res.status(401).json({ ok: false, error: 'Unauthorized' });
         }
-        return next();
+        return res.redirect('/login.html');
     }
 
-    if (!req.session.authenticated) {
-        return res.sendFile(path.join(__dirname, '../public/gate.html'));
+    const userId = req.session.discordUser.id;
+
+    // Auto-whitelist first user if whitelist is empty
+    const currentWl = getWhitelistedUsers();
+    if (currentWl.length === 0) {
+        addWhitelist(userId);
+    }
+
+    // Check whitelist status
+    if (!isWhitelisted(userId)) {
+        if (req.path.startsWith('/api/')) {
+            return res.status(403).json({ ok: false, error: 'Forbidden: Not Whitelisted' });
+        }
+        return res.sendFile(path.join(__dirname, '../public/access-denied.html'));
     }
 
     next();
 }
 
-app.use(requireAuth);
+app.use(requireDiscordAuth);
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ── API: verify password ────────────────────────────────────────────
-app.post('/api/verify-password', (req, res) => {
-    const { password } = req.body;
-    const correct = process.env.SITE_PASSWORD || 'eccosgirl';
-
-    if (password === correct) {
-        req.session.authenticated = true;
-        return res.json({ ok: true });
-    }
-    return res.status(401).json({ ok: false, error: 'Wrong password' });
-});
-
-// ── API: check auth status ──────────────────────────────────────────
+// ── API: User & Auth Status ─────────────────────────────────────────
 app.get('/api/me', (req, res) => {
+    const user = req.session.discordUser || null;
+    const whitelisted = user ? isWhitelisted(user.id) : false;
     res.json({
-        authenticated: !!req.session.authenticated,
-        discordUser: req.session.discordUser || null
+        authenticated: !!user,
+        whitelisted,
+        discordUser: user
     });
 });
 
@@ -81,6 +87,25 @@ app.get('/api/status', async (req, res) => {
     } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
     }
+});
+
+// ── API: Whitelist Management ─────────────────────────────────────
+app.get('/api/dashboard/whitelist', (req, res) => {
+    res.json({ ok: true, whitelist: getWhitelistedUsers() });
+});
+
+app.post('/api/dashboard/whitelist', (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
+    addWhitelist(userId);
+    res.json({ ok: true, whitelist: getWhitelistedUsers() });
+});
+
+app.delete('/api/dashboard/whitelist', (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
+    removeWhitelist(userId);
+    res.json({ ok: true, whitelist: getWhitelistedUsers() });
 });
 
 // ── API: Dashboard stats & control ────────────────────────────────
@@ -98,20 +123,15 @@ app.get('/api/dashboard/stats', (req, res) => {
     });
 });
 
-app.get('/api/dashboard/status-channels', (req, res) => {
-    const data = readData();
-    res.json({ ok: true, statusChannels: data.status_channels || {} });
-});
-
 app.post('/api/dashboard/emojis', (req, res) => {
     const { guildId, rules } = req.body;
-    if (!guildId || !rules) return res.status(400).json({ ok: false, error: 'Missing parameters' });
+    if (!rules) return res.status(400).json({ ok: false, error: 'Missing rules' });
     
-    setEmojiRules(guildId, rules);
+    setEmojiRules(guildId || 'default', rules);
     const client = getClient();
     if (client) syncStatusChannels(client, true);
 
-    res.json({ ok: true, rules: getEmojiRules(guildId) });
+    res.json({ ok: true, rules: getEmojiRules(guildId || 'default') });
 });
 
 app.post('/api/dashboard/sync', async (req, res) => {
@@ -141,7 +161,7 @@ app.get('/auth/discord', (req, res) => {
 
 app.get('/auth/discord/callback', async (req, res) => {
     const { code } = req.query;
-    if (!code) return res.redirect('/?error=no_code');
+    if (!code) return res.redirect('/login.html?error=no_code');
 
     try {
         const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
@@ -173,10 +193,20 @@ app.get('/auth/discord/callback', async (req, res) => {
                 : `https://cdn.discordapp.com/embed/avatars/${(BigInt(user.id) >> 22n) % 6n}.png`,
         };
 
-        res.redirect('/?linked=1');
+        // Check if user is whitelisted
+        if (!isWhitelisted(user.id)) {
+            const currentWl = getWhitelistedUsers();
+            if (currentWl.length === 0) {
+                addWhitelist(user.id);
+                return res.redirect('/');
+            }
+            return res.redirect('/access-denied.html');
+        }
+
+        res.redirect('/');
     } catch (err) {
         console.error('[OAuth]', err);
-        res.redirect('/?error=oauth_failed');
+        res.redirect('/login.html?error=oauth_failed');
     }
 });
 
@@ -186,12 +216,15 @@ app.post('/api/logout', (req, res) => {
     res.json({ ok: true });
 });
 
+// ── Dedicated /dashboard route ──────────────────────────────────────
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
 // ── Invite link ────────────────────────────────────────────────────
 app.get('/invite', (req, res) => {
     const clientId = process.env.DISCORD_CLIENT_ID;
-    if (!clientId || clientId === 'your_application_id_here') {
-        return res.status(503).send('Invite not configured yet.');
-    }
+    if (!clientId) return res.status(503).send('Invite not configured.');
     const params = new URLSearchParams({
         client_id: clientId,
         permissions: '8',
@@ -200,12 +233,14 @@ app.get('/invite', (req, res) => {
     res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
 });
 
-// ── Catch-all → index ───────────────────────────────────────────────
+// ── Catch-all ───────────────────────────────────────────────────────
 app.get('*', (req, res) => {
-    if (req.session.authenticated) {
+    if (req.session.discordUser && isWhitelisted(req.session.discordUser.id)) {
         res.sendFile(path.join(__dirname, '../public/index.html'));
+    } else if (req.session.discordUser) {
+        res.sendFile(path.join(__dirname, '../public/access-denied.html'));
     } else {
-        res.sendFile(path.join(__dirname, '../public/gate.html'));
+        res.redirect('/login.html');
     }
 });
 

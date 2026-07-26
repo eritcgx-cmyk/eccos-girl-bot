@@ -30,11 +30,12 @@ module.exports = {
         const color = allOnline ? 0x3ba55c : allOffline ? 0xed4245 : 0xfaa61a;
 
         const embed = new EmbedBuilder()
+            .setAuthor({ name: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
             .setTitle('💻 Executor Status')
             .setDescription('Live status for tracked Roblox executors. Updates every 60 seconds.')
             .addFields(fields)
             .setColor(color)
-            .setFooter({ text: `ecco's girl • ${statuses[0]?.fromApi ? 'Live from WEAO API' : 'Cached data'}` })
+            .setFooter({ text: `ecco's girl • ${statuses[0]?.fromApi ? 'Live from WEAO API' : 'Cached data'}`, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });

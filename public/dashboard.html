@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — ecco's girl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .dash-container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+        .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .dash-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 700; color: #f0e8ff; }
+        .dash-header h1 span { color: #c467ff; }
+
+        .whitelist-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .wl-item { display: flex; align-items: center; justify-content: space-between; background: #1a1625; border: 1px solid #22203a; padding: 10px 14px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .wl-del-btn { background: none; border: 1px solid #ed4245; color: #ed4245; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s; }
+        .wl-del-btn:hover { background: #ed4245; color: #fff; }
+        .add-wl-form { display: flex; gap: 8px; margin-top: 12px; }
+        .add-wl-form input { flex-grow: 1; }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="site-logo">
+                <img src="/pfp.jpg" alt="" class="logo-pfp" onerror="this.style.display='none'">
+                ecco's <span>girl</span>
+            </a>
+            <nav>
+                <a href="/">home</a>
+                <a href="/dashboard" class="nav-invite">dashboard</a>
+                <a href="/invite" target="_blank">+ add bot</a>
+            </nav>
+            <div class="user-area" id="userArea">
+                <!-- filled by JS -->
+            </div>
+        </div>
+    </header>
+
+    <main class="dash-container">
+        <div class="dash-header">
+            <h1>Control <span>Dashboard</span></h1>
+            <button id="dashSyncBtn" class="btn-main">⚡ Sync Status Channels</button>
+        </div>
+
+        <div class="dash-grid">
+            <!-- Bot Connection -->
+            <div class="dash-card">
+                <div class="dash-card-title">🤖 Bot System Status</div>
+                <div class="dash-stat-row">
+                    <span>Status:</span>
+                    <span class="s-tag online" id="dashBotStatus">connected</span>
+                </div>
+                <div class="dash-stat-row">
+                    <span>Bot Tag:</span>
+                    <strong id="dashBotTag">ecco's girl#8655</strong>
+                </div>
+                <div class="dash-stat-row">
+                    <span>Active Guilds:</span>
+                    <strong id="dashGuildsCount">1</strong>
+                </div>
+                <div class="dash-stat-row">
+                    <span>Memory Usage:</span>
+                    <strong id="dashMemory">-- MB</strong>
+                </div>
+            </div>
+
+            <!-- Whitelist Manager -->
+            <div class="dash-card">
+                <div class="dash-card-title">🛡️ Whitelist Manager</div>
+                <p class="dash-sub">Authorized Discord User IDs:</p>
+                <div class="whitelist-list" id="whitelistContainer">
+                    <div class="wl-item">Loading whitelist...</div>
+                </div>
+                <form id="addWlForm" class="add-wl-form">
+                    <input type="text" id="wlInput" placeholder="Discord User ID" class="pw-input" style="text-align:left;font-size:0.85rem;" required>
+                    <button type="submit" class="btn-main" style="padding:8px 14px;font-size:0.85rem;">Add</button>
+                </form>
+            </div>
+
+            <!-- Emoji Configuration -->
+            <div class="dash-card">
+                <div class="dash-card-title">🎨 Status Emoji Rules</div>
+                <p class="dash-sub">Custom channel prefix emojis per status:</p>
+                <form id="emojiForm" class="dash-form">
+                    <div class="form-row">
+                        <label>🟢 Undetected:</label>
+                        <input type="text" id="emojiUndetected" value="🟢" class="pw-input sm-input">
+                    </div>
+                    <div class="form-row">
+                        <label>🔵 Bypassing:</label>
+                        <input type="text" id="emojiBypassing" value="🔵" class="pw-input sm-input">
+                    </div>
+                    <div class="form-row">
+                        <label>🌕 Detected:</label>
+                        <input type="text" id="emojiDetected" value="🌕" class="pw-input sm-input">
+                    </div>
+                    <div class="form-row">
+                        <label>🟣 Updating:</label>
+                        <input type="text" id="emojiUpdating" value="🟣" class="pw-input sm-input">
+                    </div>
+                    <div class="form-row">
+                        <label>🔴 Down / Patched:</label>
+                        <input type="text" id="emojiDown" value="🔴" class="pw-input sm-input">
+                    </div>
+                    <button type="submit" class="btn-ghost dash-btn">Save Emoji Rules</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <span>ecco's girl · Control Dashboard</span>
+        <a href="/">home</a>
+        <button onclick="logout()" class="logout-link">logout</button>
+    </footer>
+
+    <script src="/dashboard.js"></script>
+</body>
+</html>

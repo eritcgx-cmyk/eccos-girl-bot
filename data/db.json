@@ -1,5 +1,16 @@
 {
   "guild_settings": {},
   "tickets": [],
-  "loadstrings": []
+  "loadstrings": [],
+  "status_channels": {
+    "1468916727940382786": [
+      {
+        "executor": "Volt",
+        "channelId": "1516925736055734465",
+        "format": "{emoji}-{executor}-{status}",
+        "lastUpdated": 1785107088406,
+        "lastLastName": "🔴-volt-down"
+      }
+    ]
+  }
 }
