@@ -23,6 +23,13 @@ app.use(session({
     }
 }));
 
+function getRedirectUri(req) {
+    if (process.env.REDIRECT_URI) return process.env.REDIRECT_URI;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.get('host');
+    return `${protocol}://${host}/auth/discord/callback`;
+}
+
 // ── Middleware: Discord OAuth & Whitelist Gate ─────────────────────
 function requireDiscordAuth(req, res, next) {
     const exempt = [
@@ -149,9 +156,10 @@ app.get('/auth/discord', (req, res) => {
         return res.status(503).send('Discord OAuth not configured yet.');
     }
 
+    const redirectUri = getRedirectUri(req);
     const params = new URLSearchParams({
         client_id: process.env.DISCORD_CLIENT_ID,
-        redirect_uri: process.env.REDIRECT_URI || `${process.env.BASE_URL}/auth/discord/callback`,
+        redirect_uri: redirectUri,
         response_type: 'code',
         scope: 'identify',
     });
@@ -164,6 +172,7 @@ app.get('/auth/discord/callback', async (req, res) => {
     if (!code) return res.redirect('/login.html?error=no_code');
 
     try {
+        const redirectUri = getRedirectUri(req);
         const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -172,12 +181,15 @@ app.get('/auth/discord/callback', async (req, res) => {
                 client_secret: process.env.DISCORD_CLIENT_SECRET,
                 grant_type: 'authorization_code',
                 code,
-                redirect_uri: process.env.REDIRECT_URI || `${process.env.BASE_URL}/auth/discord/callback`,
+                redirect_uri: redirectUri,
             })
         });
 
         const tokenData = await tokenRes.json();
-        if (!tokenData.access_token) throw new Error('No access token returned');
+        if (!tokenData.access_token) {
+            console.error('[OAuth] Token error response:', tokenData);
+            throw new Error(tokenData.error_description || 'No access token returned');
+        }
 
         const userRes = await fetch('https://discord.com/api/users/@me', {
             headers: { Authorization: `Bearer ${tokenData.access_token}` }
@@ -193,7 +205,6 @@ app.get('/auth/discord/callback', async (req, res) => {
                 : `https://cdn.discordapp.com/embed/avatars/${(BigInt(user.id) >> 22n) % 6n}.png`,
         };
 
-        // Check if user is whitelisted
         if (!isWhitelisted(user.id)) {
             const currentWl = getWhitelistedUsers();
             if (currentWl.length === 0) {
