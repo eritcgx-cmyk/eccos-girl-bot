@@ -19,6 +19,7 @@
             </a>
             <nav>
                 <a href="#status">status</a>
+                <a href="#dashboard">dashboard</a>
                 <a href="#commands">commands</a>
                 <a href="#news">news</a>
                 <a href="/invite" class="nav-invite" target="_blank">+ add to server</a>
@@ -73,26 +74,109 @@
             <p class="status-note">data from <a href="https://whatexpsare.online" target="_blank">weao.xyz</a> · refreshes every 60s</p>
         </section>
 
+        <!-- control dashboard -->
+        <section id="dashboard" class="section">
+            <h2>bot control dashboard</h2>
+            <div class="dash-grid">
+                <div class="dash-card">
+                    <div class="dash-card-title">🤖 Bot Connection</div>
+                    <div class="dash-stat-row">
+                        <span>Status:</span>
+                        <span class="s-tag online" id="dashBotStatus">connected</span>
+                    </div>
+                    <div class="dash-stat-row">
+                        <span>Bot Tag:</span>
+                        <strong id="dashBotTag">ecco's girl#8655</strong>
+                    </div>
+                    <div class="dash-stat-row">
+                        <span>Active Guilds:</span>
+                        <strong id="dashGuildsCount">1</strong>
+                    </div>
+                    <div class="dash-stat-row">
+                        <span>Memory Usage:</span>
+                        <strong id="dashMemory">-- MB</strong>
+                    </div>
+                    <button class="btn-main dash-btn" id="dashSyncBtn">⚡ Sync Status Channels Now</button>
+                </div>
+
+                <div class="dash-card">
+                    <div class="dash-card-title">🎨 Emoji Configuration</div>
+                    <p class="dash-sub">Configure channel name prefix emojis per status:</p>
+                    <form id="emojiForm" class="dash-form">
+                        <div class="form-row">
+                            <label>🟢 Undetected:</label>
+                            <input type="text" id="emojiUndetected" value="🟢" class="pw-input sm-input">
+                        </div>
+                        <div class="form-row">
+                            <label>🔵 Bypassing:</label>
+                            <input type="text" id="emojiBypassing" value="🔵" class="pw-input sm-input">
+                        </div>
+                        <div class="form-row">
+                            <label>🌕 Detected:</label>
+                            <input type="text" id="emojiDetected" value="🌕" class="pw-input sm-input">
+                        </div>
+                        <div class="form-row">
+                            <label>🟣 Updating:</label>
+                            <input type="text" id="emojiUpdating" value="🟣" class="pw-input sm-input">
+                        </div>
+                        <div class="form-row">
+                            <label>🔴 Down / Patched:</label>
+                            <input type="text" id="emojiDown" value="🔴" class="pw-input sm-input">
+                        </div>
+                        <button type="submit" class="btn-ghost dash-btn">Save Emoji Rules</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
         <!-- commands -->
         <section id="commands" class="section">
-            <h2>commands</h2>
+            <h2>commands (34 total)</h2>
             <div class="cmd-list">
                 <div class="cmd-group">
-                    <div class="cmd-group-label">🔴 roblox</div>
+                    <div class="cmd-group-label">🔴 roblox & status channels</div>
                     <div class="cmd-row"><code>/status</code><span>check a specific executor</span></div>
                     <div class="cmd-row"><code>/statusall</code><span>show all 6 tracked executors</span></div>
+                    <div class="cmd-row"><code>/status-channel add</code><span>link or auto-create dynamic status channel</span></div>
+                    <div class="cmd-row"><code>/status-channel remove</code><span>remove a status channel</span></div>
+                    <div class="cmd-row"><code>/status-channel list</code><span>list active status channels</span></div>
+                    <div class="cmd-row"><code>/status-channel emojis</code><span>customize emoji rules</span></div>
+                    <div class="cmd-row"><code>/status-channel sync</code><span>force status channel update</span></div>
                 </div>
                 <div class="cmd-group">
-                    <div class="cmd-group-label">🛡️ moderation</div>
-                    <div class="cmd-row"><code>/ban</code><span>ban a member with reason</span></div>
-                    <div class="cmd-row"><code>/kick</code><span>kick a member</span></div>
+                    <div class="cmd-group-label">🛡️ moderation & admin</div>
+                    <div class="cmd-row"><code>/ban</code><span>ban member with reason</span></div>
+                    <div class="cmd-row"><code>/kick</code><span>kick member</span></div>
                     <div class="cmd-row"><code>/purge</code><span>bulk delete messages (1–100)</span></div>
+                    <div class="cmd-row"><code>/warn</code><span>issue warning</span></div>
+                    <div class="cmd-row"><code>/warnings</code><span>view warning history</span></div>
+                    <div class="cmd-row"><code>/clearwarnings</code><span>clear member warnings</span></div>
+                    <div class="cmd-row"><code>/lock</code><span>lock channel</span></div>
+                    <div class="cmd-row"><code>/unlock</code><span>unlock channel</span></div>
+                    <div class="cmd-row"><code>/slowmode</code><span>set channel slowmode</span></div>
+                    <div class="cmd-row"><code>/role-add</code><span>add role to member</span></div>
+                    <div class="cmd-row"><code>/role-remove</code><span>remove role from member</span></div>
                 </div>
                 <div class="cmd-group">
-                    <div class="cmd-group-label">🎲 fun</div>
-                    <div class="cmd-row"><code>/8ball</code><span>ask the magic 8ball anything</span></div>
+                    <div class="cmd-group-label">🛠️ utility & info</div>
+                    <div class="cmd-row"><code>/ping</code><span>check bot & API latency</span></div>
+                    <div class="cmd-row"><code>/userinfo</code><span>view member details & roles</span></div>
+                    <div class="cmd-row"><code>/serverinfo</code><span>guild stats & boost info</span></div>
+                    <div class="cmd-row"><code>/avatar</code><span>fetch member avatar</span></div>
+                    <div class="cmd-row"><code>/botstats</code><span>view process memory & uptime</span></div>
+                    <div class="cmd-row"><code>/uptime</code><span>check bot uptime</span></div>
+                    <div class="cmd-row"><code>/servericon</code><span>view server icon</span></div>
+                    <div class="cmd-row"><code>/say</code><span>send message as bot</span></div>
+                    <div class="cmd-row"><code>/embed</code><span>create custom embed</span></div>
+                </div>
+                <div class="cmd-group">
+                    <div class="cmd-group-label">🎲 fun & social</div>
+                    <div class="cmd-row"><code>/poll</code><span>create quick reaction poll</span></div>
+                    <div class="cmd-row"><code>/8ball</code><span>ask magic 8-ball</span></div>
                     <div class="cmd-row"><code>/coinflip</code><span>heads or tails</span></div>
-                    <div class="cmd-row"><code>/help</code><span>full command list</span></div>
+                    <div class="cmd-row"><code>/joke</code><span>random tech/gaming joke</span></div>
+                    <div class="cmd-row"><code>/weather</code><span>check city weather</span></div>
+                    <div class="cmd-row"><code>/help</code><span>full interactive help</span></div>
                 </div>
             </div>
         </section>

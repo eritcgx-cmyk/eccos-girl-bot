@@ -3,6 +3,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { syncStatusChannels } = require('./status-channels');
 
 let client;
 
@@ -11,9 +12,6 @@ async function startBot() {
         intents: [
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.MessageContent,
-            GatewayIntentBits.GuildVoiceStates,
         ]
     });
 
@@ -23,10 +21,13 @@ async function startBot() {
     if (fs.existsSync(cmdDir)) {
         const files = fs.readdirSync(cmdDir).filter(f => f.endsWith('.js'));
         for (const file of files) {
-            const cmd = require(path.join(cmdDir, file));
-            if (cmd.data && cmd.execute) {
-                client.commands.set(cmd.data.name, cmd);
-                console.log(`[Bot] Loaded command: /${cmd.data.name}`);
+            const exported = require(path.join(cmdDir, file));
+            const list = Array.isArray(exported) ? exported : [exported];
+            for (const cmd of list) {
+                if (cmd && cmd.data && cmd.execute) {
+                    client.commands.set(cmd.data.name, cmd);
+                    console.log(`[Bot] Loaded command: /${cmd.data.name}`);
+                }
             }
         }
     }
@@ -46,6 +47,10 @@ async function startBot() {
     }
 
     await client.login(process.env.DISCORD_TOKEN);
+
+    // Initial status channel sync & periodic 60s ticker
+    setTimeout(() => syncStatusChannels(client), 5000);
+    setInterval(() => syncStatusChannels(client), 60_000);
 }
 
 module.exports = { startBot, getClient: () => client };

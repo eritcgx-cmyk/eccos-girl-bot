@@ -1,10 +1,11 @@
-// src/server.js — Express web server
-// Handles: static site, password gate, Discord OAuth2
-
+// src/server.js — Express web server with Control Dashboard & OAuth
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const { fetchExploitStatuses } = require('./status');
+const { readData, writeData } = require('./database/db');
+const { getEmojiRules, setEmojiRules, getStatusChannels, syncStatusChannels } = require('./status-channels');
+const { getClient } = require('./bot');
 
 const app = express();
 
@@ -23,24 +24,33 @@ app.use(session({
 
 // ── Middleware: check password ─────────────────────────────────────
 function requireAuth(req, res, next) {
-    // API routes used by the gate page itself are exempt
-    const exempt = ['/api/verify-password', '/auth/discord', '/auth/discord/callback'];
+    const exempt = [
+        '/api/verify-password',
+        '/api/status',
+        '/auth/discord',
+        '/auth/discord/callback',
+        '/invite'
+    ];
     if (exempt.some(e => req.path.startsWith(e))) return next();
 
-    // Static assets don't require auth
     const ext = path.extname(req.path);
     if (ext && ext !== '.html') return next();
 
+    if (req.path.startsWith('/api/')) {
+        if (!req.session.authenticated) {
+            return res.status(401).json({ ok: false, error: 'Unauthorized' });
+        }
+        return next();
+    }
+
     if (!req.session.authenticated) {
-        // Send the gate page instead
         return res.sendFile(path.join(__dirname, '../public/gate.html'));
     }
+
     next();
 }
 
 app.use(requireAuth);
-
-// ── Static files ───────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ── API: verify password ────────────────────────────────────────────
@@ -63,7 +73,7 @@ app.get('/api/me', (req, res) => {
     });
 });
 
-// ── API: software status (proxy WEAO, filter to our 6) ─────────────
+// ── API: software status ───────────────────────────────────────────
 app.get('/api/status', async (req, res) => {
     try {
         const statuses = await fetchExploitStatuses();
@@ -73,10 +83,50 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
+// ── API: Dashboard stats & control ────────────────────────────────
+app.get('/api/dashboard/stats', (req, res) => {
+    const client = getClient();
+    const isOnline = client && client.isReady();
+
+    res.json({
+        ok: true,
+        botStatus: isOnline ? 'online' : 'offline',
+        botTag: isOnline ? client.user.tag : 'Not connected',
+        guildsCount: isOnline ? client.guilds.cache.size : 0,
+        uptimeSeconds: isOnline ? Math.floor(client.uptime / 1000) : 0,
+        memoryMb: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+    });
+});
+
+app.get('/api/dashboard/status-channels', (req, res) => {
+    const data = readData();
+    res.json({ ok: true, statusChannels: data.status_channels || {} });
+});
+
+app.post('/api/dashboard/emojis', (req, res) => {
+    const { guildId, rules } = req.body;
+    if (!guildId || !rules) return res.status(400).json({ ok: false, error: 'Missing parameters' });
+    
+    setEmojiRules(guildId, rules);
+    const client = getClient();
+    if (client) syncStatusChannels(client, true);
+
+    res.json({ ok: true, rules: getEmojiRules(guildId) });
+});
+
+app.post('/api/dashboard/sync', async (req, res) => {
+    const client = getClient();
+    if (!client || !client.isReady()) {
+        return res.status(503).json({ ok: false, error: 'Bot is not connected' });
+    }
+    await syncStatusChannels(client, true);
+    res.json({ ok: true });
+});
+
 // ── Discord OAuth2 ─────────────────────────────────────────────────
 app.get('/auth/discord', (req, res) => {
-    if (!process.env.DISCORD_CLIENT_ID) {
-        return res.status(503).send('Discord OAuth not configured.');
+    if (!process.env.DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID === 'your_application_id_here') {
+        return res.status(503).send('Discord OAuth not configured yet.');
     }
 
     const params = new URLSearchParams({
@@ -94,7 +144,6 @@ app.get('/auth/discord/callback', async (req, res) => {
     if (!code) return res.redirect('/?error=no_code');
 
     try {
-        // Exchange code for token
         const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -110,7 +159,6 @@ app.get('/auth/discord/callback', async (req, res) => {
         const tokenData = await tokenRes.json();
         if (!tokenData.access_token) throw new Error('No access token returned');
 
-        // Fetch user info
         const userRes = await fetch('https://discord.com/api/users/@me', {
             headers: { Authorization: `Bearer ${tokenData.access_token}` }
         });
@@ -142,11 +190,11 @@ app.post('/api/logout', (req, res) => {
 app.get('/invite', (req, res) => {
     const clientId = process.env.DISCORD_CLIENT_ID;
     if (!clientId || clientId === 'your_application_id_here') {
-        return res.status(503).send('Invite not configured yet. Set DISCORD_CLIENT_ID in env.');
+        return res.status(503).send('Invite not configured yet.');
     }
     const params = new URLSearchParams({
         client_id: clientId,
-        permissions: '8', // Administrator — you can restrict this
+        permissions: '8',
         scope: 'bot applications.commands'
     });
     res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
