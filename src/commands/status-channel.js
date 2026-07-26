@@ -39,7 +39,13 @@ module.exports = {
         )
         .addSubcommand(sub =>
             sub.setName('emojis')
-               .setDescription('Customize status emojis (🟢, 🔵, 🌕, 🟣, 🔴)')
+               .setDescription('Customize status emojis for a specific channel or server')
+               .addChannelOption(o =>
+                   o.setName('channel')
+                    .setDescription('Pick the channel to customize emojis for')
+                    .addChannelTypes(ChannelType.GuildVoice, ChannelType.GuildText)
+                    .setRequired(true)
+               )
                .addStringOption(o => o.setName('undetected').setDescription('Emoji for Undetected (default: 🟢)'))
                .addStringOption(o => o.setName('bypassing').setDescription('Emoji for Bypassing (default: 🔵)'))
                .addStringOption(o => o.setName('detected').setDescription('Emoji for Detected (default: 🌕)'))
@@ -56,9 +62,8 @@ module.exports = {
             let channel  = interaction.options.getChannel('channel');
 
             if (!channel) {
-                // Auto-create a voice channel if none provided
                 channel = await interaction.guild.channels.create({
-                    name: `🟢-${executor.toLowerCase()}-undetected`,
+                    name: `╠➣〢🟢〢${executor}-𝐒𝐭𝐚𝐭𝐮𝐬`,
                     type: ChannelType.GuildVoice,
                     reason: `Status channel for ${executor}`
                 });
@@ -68,8 +73,9 @@ module.exports = {
             await syncStatusChannels(client, true);
 
             const embed = new EmbedBuilder()
+                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
                 .setTitle('✅ Status Channel Added')
-                .setDescription(`Linked <#${channel.id}> to track **${executor}**. Channel name will auto-update when status changes!`)
+                .setDescription(`Linked <#${channel.id}> to track **${executor}**. Channel name format: \`╠➣〢🟢〢${executor}-𝐒𝐭𝐚𝐭𝐮𝐬\`.`)
                 .setColor(0x3ba55c);
 
             return interaction.reply({ embeds: [embed] });
@@ -91,6 +97,7 @@ module.exports = {
             const desc = list.map(c => `• **${c.executor}** → <#${c.channelId}>`).join('\n');
             
             const embed = new EmbedBuilder()
+                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
                 .setTitle('📊 Active Status Channels')
                 .setDescription(desc)
                 .addFields({
@@ -109,6 +116,7 @@ module.exports = {
         }
 
         if (sub === 'emojis') {
+            const channel = interaction.options.getChannel('channel');
             const current = getEmojiRules(guildId);
             const updated = {
                 undetected: interaction.options.getString('undetected') || current.undetected,
@@ -122,8 +130,9 @@ module.exports = {
             await syncStatusChannels(client, true);
 
             const embed = new EmbedBuilder()
+                .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
                 .setTitle('🎨 Status Emojis Updated')
-                .setDescription(`Updated emoji rules for this server:\n🟢 Undetected: ${updated.undetected}\n🔵 Bypassing: ${updated.bypassing}\n🌕 Detected: ${updated.detected}\n🟣 Updating: ${updated.updating}\n🔴 Down: ${updated.down}`)
+                .setDescription(`Updated status emojis for <#${channel.id}>:\n🟢 Undetected: ${updated.undetected}\n🔵 Bypassing: ${updated.bypassing}\n🌕 Detected: ${updated.detected}\n🟣 Updating: ${updated.updating}\n🔴 Down: ${updated.down}`)
                 .setColor(0x3ba55c);
 
             return interaction.reply({ embeds: [embed] });

@@ -7,9 +7,14 @@
       {
         "executor": "Volt",
         "channelId": "1516925736055734465",
-        "format": "{emoji}-{executor}-{status}",
-        "lastUpdated": 1785107855005,
+        "lastUpdated": 1785108390138,
         "lastLastName": "╠➣〢🔴〢𝐕𝐨𝐥𝐭-𝐒𝐭𝐚𝐭𝐮𝐬"
+      },
+      {
+        "executor": "Potassium",
+        "channelId": "1516926188730323148",
+        "lastUpdated": 1785108390294,
+        "lastLastName": "╠➣〢🌕〢𝐏𝐨𝐭𝐚𝐬𝐬𝐢𝐮𝐦-𝐒𝐭𝐚𝐭𝐮𝐬"
       }
     ]
   },
@@ -17,6 +22,19 @@
     "volt": {
       "status": "offline",
       "detected": true
+    },
+    "potassium": {
+      "status": "online",
+      "detected": true
+    }
+  },
+  "emoji_rules": {
+    "1468916727940382786": {
+      "undetected": "🟢",
+      "bypassing": "🔵",
+      "detected": "🌕",
+      "updating": "🟣",
+      "down": "🔴"
     }
   }
 }
