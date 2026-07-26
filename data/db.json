@@ -8,9 +8,15 @@
         "executor": "Volt",
         "channelId": "1516925736055734465",
         "format": "{emoji}-{executor}-{status}",
-        "lastUpdated": 1785107088406,
-        "lastLastName": "🔴-volt-down"
+        "lastUpdated": 1785107855005,
+        "lastLastName": "╠➣〢🔴〢𝐕𝐨𝐥𝐭-𝐒𝐭𝐚𝐭𝐮𝐬"
       }
     ]
+  },
+  "previous_statuses": {
+    "volt": {
+      "status": "offline",
+      "detected": true
+    }
   }
 }

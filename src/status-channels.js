@@ -1,13 +1,8 @@
 // src/status-channels.js — Dynamic status channel manager
+const { EmbedBuilder } = require('discord.js');
 const { readData, writeData } = require('./database/db');
 const { fetchExploitStatuses } = require('./status');
 
-// Default emoji rules requested by user:
-// 🟢 = undetected-unaffected by ban waves
-// 🔵 = detected-bypasses modified client bans
-// 🌕 = detected
-// 🟣 = updating
-// 🔴 = down
 const DEFAULT_EMOJIS = {
     undetected: '🟢',
     bypassing:  '🔵',
@@ -34,18 +29,16 @@ function getStatusChannels(guildId) {
     return data.status_channels[guildId] || [];
 }
 
-function addStatusChannel(guildId, executor, channelId, channelNameFormat = '{emoji}-{executor}-{status}') {
+function addStatusChannel(guildId, executor, channelId) {
     const data = readData();
     data.status_channels = data.status_channels || {};
     data.status_channels[guildId] = data.status_channels[guildId] || [];
 
-    // Remove existing entry for this channel if any
     data.status_channels[guildId] = data.status_channels[guildId].filter(c => c.channelId !== channelId);
     
     data.status_channels[guildId].push({
         executor,
         channelId,
-        format: channelNameFormat,
         lastUpdated: 0,
         lastLastName: ''
     });
@@ -62,34 +55,36 @@ function removeStatusChannel(guildId, channelId) {
     }
 }
 
-// Compute the emoji & status text for a given exploit state object
 function computeStatusFormatting(item, emojis) {
     let emoji = emojis.down;
-    let statusText = 'down';
+    let statusText = 'Status';
 
     if (item.status === 'online') {
         if (!item.detected) {
             emoji = emojis.undetected;
-            statusText = 'undetected';
         } else if (item.bypassing) {
             emoji = emojis.bypassing;
-            statusText = 'bypasses-bans';
         } else {
             emoji = emojis.detected;
-            statusText = 'detected';
         }
     } else if (item.status === 'partial') {
         emoji = emojis.updating;
-        statusText = 'updating';
     } else {
         emoji = emojis.down;
-        statusText = 'down';
     }
 
     return { emoji, statusText };
 }
 
-// Sync all status channels for connected Discord client
+// Convert "cosmic" -> "𝐂𝐨𝐬𝐦𝐢𝐜"
+function toBoldSerif(text) {
+    const map = {
+        'a':'𝐚','b':'𝐛','c':'𝐜','d':'𝐝','e':'𝐞','f':'𝐟','g':'𝐠','h':'𝐡','i':'𝐢','j':'𝐣','k':'𝐤','l':'𝐥','m':'𝐦','n':'𝐧','o':'𝐨','p':'𝐩','q':'𝐪','r':'𝐫','s':'𝐬','t':'𝐭','u':'𝐮','v':'𝐯','w':'𝐰','x':'𝐱','y':'𝐲','z':'𝐳',
+        'A':'𝐂','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙'
+    };
+    return text.split('').map(c => map[c] || c).join('');
+}
+
 async function syncStatusChannels(client, force = false) {
     if (!client || !client.isReady()) return;
 
@@ -101,6 +96,8 @@ async function syncStatusChannels(client, force = false) {
         });
 
         const data = readData();
+        data.previous_statuses = data.previous_statuses || {};
+
         const allGuildChannels = data.status_channels || {};
 
         for (const [guildId, channels] of Object.entries(allGuildChannels)) {
@@ -112,30 +109,50 @@ async function syncStatusChannels(client, force = false) {
                 const item = statusMap[cfg.executor.toLowerCase()];
                 if (!item) continue;
 
-                const { emoji, statusText } = computeStatusFormatting(item, emojis);
-                const format = cfg.format || '{emoji}-{executor}-{status}';
-                
-                const formattedName = format
-                    .replace('{emoji}', emoji)
-                    .replace('{executor}', cfg.executor.toLowerCase().replace(/\s+/g, '-'))
-                    .replace('{status}', statusText)
-                    .replace(/[^a-zA-Z0-9\-\_🟢🔵🌕🟣🔴]/g, '-')
-                    .replace(/-+/g, '-');
+                const { emoji } = computeStatusFormatting(item, emojis);
+                const serifName = toBoldSerif(cfg.executor);
 
-                // Avoid Discord 10 min channel rename rate limits if unchanged
-                if (!force && cfg.lastLastName === formattedName) continue;
+                // User requested format: ╠➣〢🟢〢𝐂𝐨𝐬𝐦𝐢𝐜-𝐒𝐭𝐚𝐭𝐮𝐬
+                const formattedName = `╠➣〢${emoji}〢${serifName}-𝐒𝐭𝐚𝐭𝐮𝐬`;
+
+                const prevStatus = data.previous_statuses[cfg.executor.toLowerCase()];
+                const statusChanged = prevStatus && (prevStatus.status !== item.status || prevStatus.detected !== item.detected);
 
                 const channel = guild.channels.cache.get(cfg.channelId);
                 if (channel) {
-                    try {
-                        await channel.setName(formattedName);
-                        cfg.lastLastName = formattedName;
-                        cfg.lastUpdated  = Date.now();
-                        console.log(`[StatusChannel] Renamed ${cfg.channelId} -> ${formattedName}`);
-                    } catch (err) {
-                        console.warn(`[StatusChannel] Failed to rename ${cfg.channelId}:`, err.message);
+                    // Update channel name if changed
+                    if (force || cfg.lastLastName !== formattedName) {
+                        try {
+                            await channel.setName(formattedName);
+                            cfg.lastLastName = formattedName;
+                            cfg.lastUpdated  = Date.now();
+                            console.log(`[StatusChannel] Renamed ${cfg.channelId} -> ${formattedName}`);
+                        } catch (err) {
+                            console.warn(`[StatusChannel] Rename error on ${cfg.channelId}:`, err.message);
+                        }
+                    }
+
+                    // Send announcement embed if executor status/update state changed
+                    if (statusChanged && channel.isTextBased()) {
+                        const embedColor = item.status === 'online' ? 0x3ba55c : item.status === 'partial' ? 0xfaa61a : 0xed4245;
+                        const embed = new EmbedBuilder()
+                            .setTitle(`🚨 ${cfg.executor} Status Updated!`)
+                            .setDescription(`**${cfg.executor}** has changed status to **${item.status.toUpperCase()}**.`)
+                            .addFields(
+                                { name: 'Status', value: `${emoji} ${item.note}`, inline: true },
+                                { name: 'Version', value: item.version || 'Latest', inline: true }
+                            )
+                            .setColor(embedColor)
+                            .setFooter({ text: `ecco's girl • Live Update` })
+                            .setTimestamp();
+
+                        try {
+                            await channel.send({ embeds: [embed] });
+                        } catch (e) {}
                     }
                 }
+
+                data.previous_statuses[cfg.executor.toLowerCase()] = { status: item.status, detected: item.detected };
             }
         }
         writeData(data);

@@ -38,7 +38,7 @@ module.exports = {
             .setTitle(`${STATUS_EMOJI[item.status]} ${item.name}`)
             .setDescription(item.note)
             .setColor(STATUS_COLOR[item.status] || 0x808080)
-            .setFooter({ text: `ecco's girl • ${item.fromApi ? 'Live from WEAO API' : 'Cached data'}`, iconURL: interaction.user.displayAvatarURL() })
+            .setFooter({ text: `ecco's girl • Live Status`, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });

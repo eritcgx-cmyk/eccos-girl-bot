@@ -21,6 +21,7 @@ module.exports = {
         await target.ban({ deleteMessageSeconds: days * 86400, reason });
 
         const embed = new EmbedBuilder()
+            .setAuthor({ name: `Moderator: ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
             .setTitle('🔨 Member Banned')
             .addFields(
                 { name: 'User', value: `${target.user.tag}`, inline: true },
@@ -28,6 +29,7 @@ module.exports = {
                 { name: 'By', value: interaction.user.tag, inline: true },
             )
             .setColor(0xed4245)
+            .setFooter({ text: `ecco's girl • Moderation`, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });

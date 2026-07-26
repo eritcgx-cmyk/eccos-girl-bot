@@ -1,9 +1,11 @@
-// src/bot.js — Discord bot core (discord.js v14)
+// src/bot.js — Discord bot core (discord.js v14) with Server Restriction
 
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { syncStatusChannels } = require('./status-channels');
+
+const ALLOWED_GUILD_ID = '1468916727940382786';
 
 let client;
 
@@ -46,6 +48,14 @@ async function startBot() {
         }
     }
 
+    // Enforce single-server restriction when joining guilds
+    client.on('guildCreate', async (guild) => {
+        if (guild.id !== ALLOWED_GUILD_ID) {
+            console.log(`[Security] Leaving unauthorized guild: ${guild.name} (${guild.id})`);
+            await guild.leave();
+        }
+    });
+
     await client.login(process.env.DISCORD_TOKEN);
 
     // Initial status channel sync & periodic 60s ticker
@@ -53,4 +63,4 @@ async function startBot() {
     setInterval(() => syncStatusChannels(client), 60_000);
 }
 
-module.exports = { startBot, getClient: () => client };
+module.exports = { startBot, getClient: () => client, ALLOWED_GUILD_ID };

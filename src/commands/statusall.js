@@ -35,7 +35,7 @@ module.exports = {
             .setDescription('Live status for tracked Roblox executors. Updates every 60 seconds.')
             .addFields(fields)
             .setColor(color)
-            .setFooter({ text: `ecco's girl • ${statuses[0]?.fromApi ? 'Live from WEAO API' : 'Cached data'}`, iconURL: interaction.user.displayAvatarURL() })
+            .setFooter({ text: `ecco's girl • Live Status`, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });
