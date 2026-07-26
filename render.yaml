@@ -3,14 +3,18 @@ services:
     name: eccos-girl-bot
     env: node
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node index.js
     plan: free
     envVars:
       - key: DISCORD_TOKEN
         sync: false
-      - key: CLIENT_ID
+      - key: DISCORD_CLIENT_ID
         sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: SITE_PASSWORD
+        value: eccosgirl
+      - key: SESSION_SECRET
+        value: eccos_girl_super_secret_session_2026
       - key: PORT
-        value: 8080
-      - key: STATUS_API_URL
-        value: https://whatexpsare.online/api/status
+        value: 3000
