@@ -14,8 +14,8 @@ const FALLBACK = {
 };
 
 const WEAO_ENDPOINTS = [
-    'https://api.weao.xyz/exploits',
     'https://whatexpsare.online/api/status/exploits',
+    'https://api.weao.xyz/exploits',
     'https://whatexpsare.online/api/exploits',
 ];
 
@@ -40,21 +40,40 @@ async function fetchExploitStatuses() {
             const items = Array.isArray(raw) ? raw : raw.exploits || raw.data || [];
             if (!items.length) continue;
 
-            // Build a name → status lookup (case-insensitive)
+            // Build a name → item lookup (case-insensitive)
             const lookup = {};
             for (const item of items) {
-                const name = (item.name || item.title || '').toLowerCase().trim();
-                lookup[name] = (item.status || item.state || 'unknown').toLowerCase();
+                const name = (item.title || item.name || '').toLowerCase().trim();
+                if (name && !lookup[name]) {
+                    lookup[name] = item;
+                }
             }
 
             // Map our tracked names
             const result = TRACKED.map(name => {
                 const key = name.toLowerCase();
-                const raw_status = lookup[key] || 'unknown';
+                const item = lookup[key];
+                
+                let status = 'unknown';
+                let version = '';
+                let detected = false;
+
+                if (item) {
+                    if (typeof item.updateStatus === 'boolean') {
+                        status = item.updateStatus ? 'online' : 'offline';
+                    } else if (item.status) {
+                        status = normalizeStatus(item.status);
+                    }
+                    version = item.version || '';
+                    detected = !!item.detected;
+                }
+
                 return {
                     name,
-                    status: normalizeStatus(raw_status),
-                    note:   noteForStatus(normalizeStatus(raw_status)),
+                    status,
+                    version,
+                    detected,
+                    note: noteForStatus(status, detected),
                     fromApi: true,
                 };
             });
@@ -82,20 +101,25 @@ async function fetchExploitStatuses() {
 
 function normalizeStatus(s) {
     if (!s) return 'unknown';
-    s = s.toLowerCase();
-    if (s === 'working' || s === 'online' || s === 'up' || s === 'operational') return 'online';
-    if (s === 'patched' || s === 'offline' || s === 'down' || s === 'broken') return 'offline';
+    s = String(s).toLowerCase();
+    if (s === 'working' || s === 'online' || s === 'up' || s === 'operational' || s === 'true') return 'online';
+    if (s === 'patched' || s === 'offline' || s === 'down' || s === 'broken' || s === 'false') return 'offline';
     if (s === 'partial' || s === 'degraded' || s === 'crashing') return 'partial';
     return 'unknown';
 }
 
-function noteForStatus(s) {
+function noteForStatus(s, detected) {
+    let note = '';
     switch (s) {
-        case 'online':  return 'Fully operational';
-        case 'offline': return 'Currently patched / down';
-        case 'partial': return 'Degraded / crashing';
-        default:        return 'Status unknown';
+        case 'online':  note = 'Updated & working'; break;
+        case 'offline': note = 'Patched / updating'; break;
+        case 'partial': note = 'Degraded / partial'; break;
+        default:        note = 'Status unknown'; break;
     }
+    if (detected) {
+        note += ' (Detected)';
+    }
+    return note;
 }
 
 module.exports = { fetchExploitStatuses, TRACKED };

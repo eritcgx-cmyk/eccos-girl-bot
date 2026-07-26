@@ -55,7 +55,10 @@ async function loadStatus(manual = false) {
         grid.innerHTML = data.data.map(item => `
             <div class="status-card">
                 <span class="s-dot ${item.status}"></span>
-                <span class="s-name">${esc(item.name)}</span>
+                <div class="s-info">
+                    <span class="s-name">${esc(item.name)}</span>
+                    <span class="s-sub">${esc(item.note || item.version || '')}</span>
+                </div>
                 <span class="s-tag ${item.status}">${item.status}</span>
             </div>
         `).join('');
