@@ -16,11 +16,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'eccos-girl-secret-change-me',
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
+    proxy: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        secure: false, // Compatible across HTTP and HTTPS proxies
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     }
 }));
 
@@ -206,16 +208,23 @@ app.get('/auth/discord/callback', async (req, res) => {
                 : `https://cdn.discordapp.com/embed/avatars/${(BigInt(user.id) >> 22n) % 6n}.png`,
         };
 
-        if (!isWhitelisted(user.id)) {
+        const whitelisted = isWhitelisted(user.id);
+        if (!whitelisted) {
             const currentWl = getWhitelistedUsers();
             if (currentWl.length === 0) {
                 addWhitelist(user.id);
-                return res.redirect('/');
             }
-            return res.redirect('/access-denied.html');
         }
 
-        res.redirect('/');
+        // Explicitly flush session to cookie BEFORE redirecting
+        req.session.save((err) => {
+            if (err) console.error('[OAuth] Session save error:', err);
+            if (isWhitelisted(user.id)) {
+                res.redirect('/dashboard');
+            } else {
+                res.redirect('/access-denied.html');
+            }
+        });
     } catch (err) {
         console.error('[OAuth]', err);
         res.redirect('/login.html?error=oauth_failed');
@@ -255,6 +264,12 @@ app.get('*', (req, res) => {
         res.redirect('/login.html');
     }
 });
+
+// 24/7 Keep-Alive self-ping ticker
+setInterval(() => {
+    const selfUrl = process.env.RENDER_EXTERNAL_URL || 'https://eccos-girl-bot.onrender.com/api/status';
+    fetch(selfUrl).catch(() => {});
+}, 4 * 60 * 1000);
 
 function startServer() {
     return new Promise(resolve => {

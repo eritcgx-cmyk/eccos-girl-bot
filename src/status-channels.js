@@ -60,32 +60,57 @@ function computeStatusFormatting(item, emojis) {
     let statusText = 'Status';
 
     if (item.status === 'online') {
-        if (!item.detected) {
-            emoji = emojis.undetected;
-        } else if (item.bypassing) {
-            emoji = emojis.bypassing;
+        if (item.bypassing) {
+            emoji = emojis.bypassing; // 🔵
+        } else if (item.detected) {
+            emoji = emojis.detected; // 🌕
         } else {
-            emoji = emojis.detected;
+            emoji = emojis.undetected; // 🟢
         }
     } else if (item.status === 'partial') {
-        emoji = emojis.updating;
+        emoji = emojis.updating; // 🟣
     } else {
-        emoji = emojis.down;
+        emoji = emojis.down; // 🔴
     }
 
     return { emoji, statusText };
 }
 
-// Convert "cosmic" -> "𝐂𝐨𝐬𝐦𝐢𝐜"
+// Convert "Cosmic" -> "𝐂𝐨𝐬𝐦𝐢𝐜"
 function toBoldSerif(text) {
     const map = {
         'a':'𝐚','b':'𝐛','c':'𝐜','d':'𝐝','e':'𝐞','f':'𝐟','g':'𝐠','h':'𝐡','i':'𝐢','j':'𝐣','k':'𝐤','l':'𝐥','m':'𝐦','n':'𝐧','o':'𝐨','p':'𝐩','q':'𝐪','r':'𝐫','s':'𝐬','t':'𝐭','u':'𝐮','v':'𝐯','w':'𝐰','x':'𝐱','y':'𝐲','z':'𝐳',
-        'A':'𝐂','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙'
+        'A':'𝐀','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙'
     };
     return text.split('').map(c => map[c] || c).join('');
 }
 
-async function syncStatusChannels(client, force = false) {
+async function sendChangelogEmbed(channel, executor, item, emoji, userAvatar = null) {
+    if (!channel || !channel.isTextBased()) return;
+
+    const embedColor = item.status === 'online' ? (item.bypassing ? 0x3b82f6 : item.detected ? 0xeab308 : 0x3ba55c) : item.status === 'partial' ? 0xa855f7 : 0xed4245;
+
+    const embed = new EmbedBuilder()
+        .setTitle(`🚀 ${executor} Status & Changelog`)
+        .setDescription(`Live software status update for **${executor}**.`)
+        .addFields(
+            { name: 'Current Status', value: `${emoji} **${item.status.toUpperCase()}**`, inline: true },
+            { name: 'Banwave / Detection', value: item.bypassing ? '🔵 Bypassing Modified Client Bans' : item.detected ? '🌕 Detected' : '🟢 Undetected (Safe)', inline: true },
+            { name: 'Version & Build', value: item.version || 'Latest Version', inline: true },
+            { name: 'Status Note', value: item.note || 'Operational', inline: false }
+        )
+        .setColor(embedColor)
+        .setFooter({ text: `ecco's girl • Software Monitor`, iconURL: userAvatar || undefined })
+        .setTimestamp();
+
+    try {
+        await channel.send({ embeds: [embed] });
+    } catch (e) {
+        console.warn(`[StatusChannel] Could not send embed to ${channel.id}:`, e.message);
+    }
+}
+
+async function syncStatusChannels(client, force = false, triggerUser = null) {
     if (!client || !client.isReady()) return;
 
     try {
@@ -112,15 +137,13 @@ async function syncStatusChannels(client, force = false) {
                 const { emoji } = computeStatusFormatting(item, emojis);
                 const serifName = toBoldSerif(cfg.executor);
 
-                // User requested format: ╠➣〢🟢〢𝐂𝐨𝐬𝐦𝐢𝐜-𝐒𝐭𝐚𝐭𝐮𝐬
                 const formattedName = `╠➣〢${emoji}〢${serifName}-𝐒𝐭𝐚𝐭𝐮𝐬`;
 
                 const prevStatus = data.previous_statuses[cfg.executor.toLowerCase()];
-                const statusChanged = prevStatus && (prevStatus.status !== item.status || prevStatus.detected !== item.detected);
+                const statusChanged = !prevStatus || prevStatus.status !== item.status || prevStatus.detected !== item.detected || prevStatus.bypassing !== item.bypassing;
 
                 const channel = guild.channels.cache.get(cfg.channelId);
                 if (channel) {
-                    // Update channel name if changed
                     if (force || cfg.lastLastName !== formattedName) {
                         try {
                             await channel.setName(formattedName);
@@ -132,27 +155,12 @@ async function syncStatusChannels(client, force = false) {
                         }
                     }
 
-                    // Send announcement embed if executor status/update state changed
-                    if (statusChanged && channel.isTextBased()) {
-                        const embedColor = item.status === 'online' ? 0x3ba55c : item.status === 'partial' ? 0xfaa61a : 0xed4245;
-                        const embed = new EmbedBuilder()
-                            .setTitle(`🚨 ${cfg.executor} Status Updated!`)
-                            .setDescription(`**${cfg.executor}** has changed status to **${item.status.toUpperCase()}**.`)
-                            .addFields(
-                                { name: 'Status', value: `${emoji} ${item.note}`, inline: true },
-                                { name: 'Version', value: item.version || 'Latest', inline: true }
-                            )
-                            .setColor(embedColor)
-                            .setFooter({ text: `ecco's girl • Live Update` })
-                            .setTimestamp();
-
-                        try {
-                            await channel.send({ embeds: [embed] });
-                        } catch (e) {}
+                    if ((statusChanged || force) && channel.isTextBased()) {
+                        await sendChangelogEmbed(channel, cfg.executor, item, emoji, triggerUser ? triggerUser.displayAvatarURL() : null);
                     }
                 }
 
-                data.previous_statuses[cfg.executor.toLowerCase()] = { status: item.status, detected: item.detected };
+                data.previous_statuses[cfg.executor.toLowerCase()] = { status: item.status, detected: item.detected, bypassing: item.bypassing };
             }
         }
         writeData(data);
@@ -169,5 +177,6 @@ module.exports = {
     addStatusChannel,
     removeStatusChannel,
     syncStatusChannels,
-    computeStatusFormatting
+    computeStatusFormatting,
+    sendChangelogEmbed
 };
