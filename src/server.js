@@ -2,11 +2,12 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { fetchExploitStatuses } = require('./status');
+const { fetchExploitStatuses, setExploitOverride, clearExploitOverride, TRACKED } = require('./status');
 const { readData, writeData } = require('./database/db');
 const { getEmojiRules, setEmojiRules, syncStatusChannels } = require('./status-channels');
 const { getWhitelistedUsers, isWhitelisted, addWhitelist, removeWhitelist } = require('./whitelist');
 const { getClient } = require('./bot');
+const { EmbedBuilder } = require('discord.js');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -119,9 +120,10 @@ app.delete('/api/dashboard/whitelist', (req, res) => {
 });
 
 // ── API: Dashboard stats & control ────────────────────────────────
-app.get('/api/dashboard/stats', (req, res) => {
+app.get('/api/dashboard/stats', async (req, res) => {
     const client = getClient();
     const isOnline = client && client.isReady();
+    const statuses = await fetchExploitStatuses();
 
     res.json({
         ok: true,
@@ -130,7 +132,63 @@ app.get('/api/dashboard/stats', (req, res) => {
         guildsCount: isOnline ? client.guilds.cache.size : 0,
         uptimeSeconds: isOnline ? Math.floor(client.uptime / 1000) : 0,
         memoryMb: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+        statuses
     });
+});
+
+app.post('/api/dashboard/override', async (req, res) => {
+    const { executor, statusType, note } = req.body;
+    if (!executor) return res.status(400).json({ ok: false, error: 'Missing executor' });
+
+    if (statusType === 'reset') {
+        clearExploitOverride(executor);
+    } else {
+        let status = 'online';
+        let detected = false;
+        let bypassing = false;
+
+        if (statusType === 'online') { status = 'online'; detected = false; bypassing = false; }
+        else if (statusType === 'bypassing') { status = 'online'; detected = true; bypassing = true; }
+        else if (statusType === 'detected') { status = 'online'; detected = true; bypassing = false; }
+        else if (statusType === 'partial') { status = 'partial'; detected = false; bypassing = false; }
+        else if (statusType === 'offline') { status = 'offline'; detected = false; bypassing = false; }
+
+        setExploitOverride(executor, { status, detected, bypassing, note: note || 'Updated & Working' });
+    }
+
+    const client = getClient();
+    if (client) await syncStatusChannels(client, true);
+
+    res.json({ ok: true, statuses: await fetchExploitStatuses() });
+});
+
+app.post('/api/dashboard/announce', async (req, res) => {
+    const { title, message } = req.body;
+    if (!title || !message) return res.status(400).json({ ok: false, error: 'Title and message required' });
+
+    const client = getClient();
+    if (!client || !client.isReady()) return res.status(503).json({ ok: false, error: 'Bot is offline' });
+
+    const user = req.session.discordUser;
+    const embed = new EmbedBuilder()
+        .setAuthor({ name: `Dashboard Broadcast by ${user.username}`, iconURL: user.avatar })
+        .setTitle(`📢 ${title}`)
+        .setDescription(message)
+        .setColor(0xc467ff)
+        .setTimestamp();
+
+    let sent = 0;
+    for (const guild of client.guilds.cache.values()) {
+        const textChannel = guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me).has('SendMessages'));
+        if (textChannel) {
+            try {
+                await textChannel.send({ embeds: [embed] });
+                sent++;
+            } catch {}
+        }
+    }
+
+    res.json({ ok: true, sentCount: sent });
 });
 
 app.post('/api/dashboard/emojis', (req, res) => {
@@ -216,7 +274,6 @@ app.get('/auth/discord/callback', async (req, res) => {
             }
         }
 
-        // Explicitly flush session to cookie BEFORE redirecting
         req.session.save((err) => {
             if (err) console.error('[OAuth] Session save error:', err);
             if (isWhitelisted(user.id)) {
@@ -265,7 +322,6 @@ app.get('*', (req, res) => {
     }
 });
 
-// 24/7 Keep-Alive self-ping ticker
 setInterval(() => {
     const selfUrl = process.env.RENDER_EXTERNAL_URL || 'https://eccos-girl-bot.onrender.com/api/status';
     fetch(selfUrl).catch(() => {});

@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <style>
-        .dash-container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+        .dash-container { max-width: 1040px; margin: 40px auto; padding: 0 20px; }
         .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
         .dash-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 700; color: #f0e8ff; }
         .dash-header h1 span { color: #c467ff; }
@@ -19,6 +19,11 @@
         .wl-del-btn:hover { background: #ed4245; color: #fff; }
         .add-wl-form { display: flex; gap: 8px; margin-top: 12px; }
         .add-wl-form input { flex-grow: 1; }
+
+        .override-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+        .override-row { display: flex; align-items: center; justify-content: space-between; background: #1a1625; border: 1px solid #22203a; padding: 10px 14px; border-radius: 8px; gap: 10px; flex-wrap: wrap; }
+        .override-row select { background: #0d0d12; color: #e8e0f0; border: 1px solid #2e2640; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
+        .override-row input { background: #0d0d12; color: #e8e0f0; border: 1px solid #2e2640; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; flex-grow: 1; }
     </style>
 </head>
 <body>
@@ -66,6 +71,10 @@
                     <span>Memory Usage:</span>
                     <strong id="dashMemory">-- MB</strong>
                 </div>
+                <div class="dash-stat-row">
+                    <span>Server Lock:</span>
+                    <strong style="color:#3ba55c">Guild 1468916727940382786</strong>
+                </div>
             </div>
 
             <!-- Whitelist Manager -->
@@ -79,6 +88,15 @@
                     <input type="text" id="wlInput" placeholder="Discord User ID" class="pw-input" style="text-align:left;font-size:0.85rem;" required>
                     <button type="submit" class="btn-main" style="padding:8px 14px;font-size:0.85rem;">Add</button>
                 </form>
+            </div>
+
+            <!-- Executor Status Overrides -->
+            <div class="dash-card" style="grid-column: 1 / -1;">
+                <div class="dash-card-title">⚡ Executor Status Control Panel</div>
+                <p class="dash-sub">Set status & emojis for tracked software (Auto-Saves persistently):</p>
+                <div class="override-grid" id="overrideGrid">
+                    <!-- filled by JS -->
+                </div>
             </div>
 
             <!-- Emoji Configuration -->
@@ -107,6 +125,23 @@
                         <input type="text" id="emojiDown" value="🔴" class="pw-input sm-input">
                     </div>
                     <button type="submit" class="btn-ghost dash-btn">Save Emoji Rules</button>
+                </form>
+            </div>
+
+            <!-- Quick Announcement Broadcast -->
+            <div class="dash-card">
+                <div class="dash-card-title">📢 Broadcast Announcement</div>
+                <p class="dash-sub">Send announcement embed directly from Web:</p>
+                <form id="announceForm" class="dash-form">
+                    <div class="form-row">
+                        <label>Title:</label>
+                        <input type="text" id="annTitle" placeholder="Announcement Title" class="pw-input sm-input" required>
+                    </div>
+                    <div class="form-row">
+                        <label>Message:</label>
+                        <input type="text" id="annMsg" placeholder="Announcement message..." class="pw-input sm-input" required>
+                    </div>
+                    <button type="submit" class="btn-main dash-btn" style="margin-top:10px;">Send Announcement</button>
                 </form>
             </div>
         </div>
