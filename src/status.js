@@ -1,9 +1,8 @@
-// src/status.js — Fetches exploit statuses from WEAO API
-// Only tracks: Volt, Synapse Z, Wave, Delta, Cosmic, Potassium
+// src/status.js — Fetches exploit statuses with manual override support
+const { readData, writeData } = require('./database/db');
 
 const TRACKED = ['Volt', 'Synapse Z', 'Wave', 'Delta', 'Cosmic', 'Potassium'];
 
-// Fallback static data (shown when API is unreachable)
 const FALLBACK = {
     'Volt':      { status: 'online',  note: 'Fully operational' },
     'Synapse Z': { status: 'online',  note: 'Fully operational' },
@@ -21,82 +20,118 @@ const WEAO_ENDPOINTS = [
 
 let cachedData = null;
 let cacheTime  = 0;
-const CACHE_TTL = 60_000; // 60 seconds
+const CACHE_TTL = 30_000;
+
+function getOverrides() {
+    const data = readData();
+    return data.status_overrides || {};
+}
+
+function setExploitOverride(name, statusObj) {
+    const data = readData();
+    data.status_overrides = data.status_overrides || {};
+    data.status_overrides[name.toLowerCase()] = statusObj;
+    writeData(data);
+    cachedData = null; // Invalidate cache
+}
+
+function clearExploitOverride(name) {
+    const data = readData();
+    data.status_overrides = data.status_overrides || {};
+    delete data.status_overrides[name.toLowerCase()];
+    writeData(data);
+    cachedData = null;
+}
 
 async function fetchExploitStatuses() {
-    // Return cache if fresh
-    if (cachedData && Date.now() - cacheTime < CACHE_TTL) return cachedData;
+    const overrides = getOverrides();
 
-    for (const url of WEAO_ENDPOINTS) {
-        try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(url, { signal: controller.signal });
-            clearTimeout(timer);
+    let baseStatuses = [];
 
-            if (!res.ok) continue;
-            const raw = await res.json();
+    // Return cache if fresh and no recent override changes
+    if (cachedData && Date.now() - cacheTime < CACHE_TTL) {
+        baseStatuses = cachedData;
+    } else {
+        for (const url of WEAO_ENDPOINTS) {
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 5000);
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
 
-            const items = Array.isArray(raw) ? raw : raw.exploits || raw.data || [];
-            if (!items.length) continue;
+                if (!res.ok) continue;
+                const raw = await res.json();
 
-            // Build a name → item lookup (case-insensitive)
-            const lookup = {};
-            for (const item of items) {
-                const name = (item.title || item.name || '').toLowerCase().trim();
-                if (name && !lookup[name]) {
-                    lookup[name] = item;
-                }
-            }
+                const items = Array.isArray(raw) ? raw : raw.exploits || raw.data || [];
+                if (!items.length) continue;
 
-            // Map our tracked names
-            const result = TRACKED.map(name => {
-                const key = name.toLowerCase();
-                const item = lookup[key];
-                
-                let status = 'unknown';
-                let version = '';
-                let detected = false;
-
-                if (item) {
-                    if (typeof item.updateStatus === 'boolean') {
-                        status = item.updateStatus ? 'online' : 'offline';
-                    } else if (item.status) {
-                        status = normalizeStatus(item.status);
+                const lookup = {};
+                for (const item of items) {
+                    const name = (item.title || item.name || '').toLowerCase().trim();
+                    if (name && !lookup[name]) {
+                        lookup[name] = item;
                     }
-                    version = item.version || '';
-                    detected = !!item.detected;
                 }
 
-                return {
-                    name,
-                    status,
-                    version,
-                    detected,
-                    note: noteForStatus(status, detected),
-                    fromApi: true,
-                };
-            });
+                baseStatuses = TRACKED.map(name => {
+                    const key = name.toLowerCase();
+                    const item = lookup[key];
+                    
+                    let status = 'unknown';
+                    let version = '';
+                    let detected = false;
 
-            cachedData = result;
-            cacheTime  = Date.now();
-            return result;
-        } catch (_) {
-            // Try next endpoint
+                    if (item) {
+                        if (typeof item.updateStatus === 'boolean') {
+                            status = item.updateStatus ? 'online' : 'offline';
+                        } else if (item.status) {
+                            status = normalizeStatus(item.status);
+                        }
+                        version = item.version || '';
+                        detected = !!item.detected;
+                    }
+
+                    return {
+                        name,
+                        status,
+                        version,
+                        detected,
+                        note: noteForStatus(status, detected),
+                        fromApi: true,
+                    };
+                });
+
+                cachedData = baseStatuses;
+                cacheTime  = Date.now();
+                break;
+            } catch (_) {}
         }
     }
 
-    // All failed — return fallback
-    console.warn('[Status] All WEAO endpoints failed, using fallback');
-    const result = TRACKED.map(name => ({
-        name,
-        status: FALLBACK[name]?.status || 'unknown',
-        note:   FALLBACK[name]?.note   || 'Status unknown',
-        fromApi: false,
-    }));
-    cachedData = result;
-    cacheTime  = Date.now();
-    return result;
+    if (!baseStatuses || !baseStatuses.length) {
+        baseStatuses = TRACKED.map(name => ({
+            name,
+            status: FALLBACK[name]?.status || 'unknown',
+            note:   FALLBACK[name]?.note   || 'Status unknown',
+            fromApi: false,
+        }));
+    }
+
+    // Apply any active manual overrides
+    return baseStatuses.map(item => {
+        const override = overrides[item.name.toLowerCase()];
+        if (override) {
+            return {
+                ...item,
+                status: override.status || item.status,
+                detected: typeof override.detected === 'boolean' ? override.detected : item.detected,
+                bypassing: typeof override.bypassing === 'boolean' ? override.bypassing : item.bypassing,
+                note: override.note || noteForStatus(override.status || item.status, override.detected),
+                isOverridden: true
+            };
+        }
+        return item;
+    });
 }
 
 function normalizeStatus(s) {
@@ -122,4 +157,9 @@ function noteForStatus(s, detected) {
     return note;
 }
 
-module.exports = { fetchExploitStatuses, TRACKED };
+module.exports = {
+    fetchExploitStatuses,
+    setExploitOverride,
+    clearExploitOverride,
+    TRACKED
+};

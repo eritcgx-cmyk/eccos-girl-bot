@@ -9,6 +9,7 @@ const { getWhitelistedUsers, isWhitelisted, addWhitelist, removeWhitelist } = re
 const { getClient } = require('./bot');
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -25,8 +26,8 @@ app.use(session({
 
 function getRedirectUri(req) {
     if (process.env.REDIRECT_URI) return process.env.REDIRECT_URI;
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const host = req.get('host');
+    const protocol = host.includes('localhost') ? 'http' : 'https';
     return `${protocol}://${host}/auth/discord/callback`;
 }
 
