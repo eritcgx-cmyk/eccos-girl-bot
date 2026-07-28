@@ -14,6 +14,8 @@ async function startBot() {
         intents: [
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.MessageContent,
         ]
     });
 
@@ -54,6 +56,27 @@ async function startBot() {
             console.log(`[Security] Leaving unauthorized guild: ${guild.name} (${guild.id})`);
             await guild.leave();
         }
+    });
+
+    // ── Gateway error / disconnect recovery ──────────────────────────────────
+    client.on('error', (err) => {
+        console.error('[Bot] Gateway error (recovering):', err.message);
+    });
+
+    client.on('shardError', (err) => {
+        console.error('[Bot] Shard error (will auto-reconnect):', err.message);
+    });
+
+    client.on('shardDisconnect', (event, id) => {
+        console.warn(`[Bot] Shard ${id} disconnected (code ${event.code}) — reconnecting...`);
+    });
+
+    client.on('shardReconnecting', (id) => {
+        console.log(`[Bot] Shard ${id} reconnecting...`);
+    });
+
+    client.on('shardResume', (id, replayed) => {
+        console.log(`[Bot] Shard ${id} resumed (${replayed} events replayed).`);
     });
 
     await client.login(process.env.DISCORD_TOKEN);
