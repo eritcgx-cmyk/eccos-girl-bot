@@ -37,6 +37,7 @@ function getRedirectUri(req) {
 // ── Middleware: Discord OAuth & Whitelist Gate ─────────────────────
 function requireDiscordAuth(req, res, next) {
     const exempt = [
+        '/health',
         '/login.html',
         '/access-denied.html',
         '/auth/discord',
@@ -75,6 +76,21 @@ function requireDiscordAuth(req, res, next) {
 
     next();
 }
+
+// ── Health Check (public — used by Render & keep-alive pinger) ─────────
+// This MUST come before the auth middleware
+app.get('/health', (req, res) => {
+    const client = getClient();
+    res.json({
+        ok: true,
+        service: "ecco's girl",
+        status: 'alive',
+        botOnline: !!(client && client.isReady()),
+        uptime: Math.floor(process.uptime()),
+        memoryMb: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+        timestamp: new Date().toISOString()
+    });
+});
 
 app.use(requireDiscordAuth);
 app.use(express.static(path.join(__dirname, '../public')));
@@ -322,8 +338,11 @@ app.get('*', (req, res) => {
     }
 });
 
+// ── Built-in keep-alive pinger (secondary, backs up index.js pinger) ────────
 setInterval(() => {
-    const selfUrl = process.env.RENDER_EXTERNAL_URL || 'https://eccos-girl-bot.onrender.com/api/status';
+    const selfUrl = process.env.RENDER_EXTERNAL_URL
+        ? `${process.env.RENDER_EXTERNAL_URL}/health`
+        : 'https://eccos-girl-bot.onrender.com/health';
     fetch(selfUrl).catch(() => {});
 }, 4 * 60 * 1000);
 
