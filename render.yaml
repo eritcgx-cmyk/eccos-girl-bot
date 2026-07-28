@@ -17,7 +17,7 @@ services:
       - key: DISCORD_GUILD_ID
         value: "1468916727940382786"
       - key: PORT
-        value: "10000"
+        value: "3000"
       - key: SESSION_SECRET
         generateValue: true
       - key: REDIRECT_URI
