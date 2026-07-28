@@ -2,19 +2,36 @@ services:
   - type: web
     name: eccos-girl-bot
     env: node
+    region: oregon
     buildCommand: npm install
     startCommand: node index.js
     plan: free
+    healthCheckPath: /health
+
     envVars:
+      # ── Discord Bot (set these in the Render dashboard — never commit tokens!) ──
       - key: DISCORD_TOKEN
         sync: false
       - key: DISCORD_CLIENT_ID
-        sync: false
+        value: "1531068742631555337"
       - key: DISCORD_CLIENT_SECRET
         sync: false
-      - key: SITE_PASSWORD
-        value: eccosgirl
-      - key: SESSION_SECRET
-        value: eccos_girl_super_secret_session_2026
+      - key: DISCORD_GUILD_ID
+        value: "1468916727940382786"
+
+      # ── Web Server ─────────────────────────────────────────────────────────────
       - key: PORT
-        value: 3000
+        value: "10000"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: REDIRECT_URI
+        value: "https://eccos-girl-bot.onrender.com/auth/discord/callback"
+      - key: SITE_PASSWORD
+        value: "eccosgirl"
+
+      # ── Render sets this automatically (used by keep-alive pinger) ────────────
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: eccos-girl-bot
+          type: web
+          property: host
