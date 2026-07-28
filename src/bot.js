@@ -79,7 +79,28 @@ async function startBot() {
         console.log(`[Bot] Shard ${id} resumed (${replayed} events replayed).`);
     });
 
-    await client.login(process.env.DISCORD_TOKEN);
+    try {
+        await client.login(process.env.DISCORD_TOKEN);
+        console.log(`[Bot] ✅ Connected to Discord gateway as ${client.user?.tag || 'ecco\'s girl'}`);
+    } catch (err) {
+        if (err.code === 'DisallowedIntents' || err.message.includes('intent')) {
+            console.warn('[Bot] Privileged intents not enabled in Discord Dev Portal — falling back to standard intents...');
+            client = new Client({
+                intents: [
+                    GatewayIntentBits.Guilds,
+                    GatewayIntentBits.GuildMessages,
+                ]
+            });
+            try {
+                await client.login(process.env.DISCORD_TOKEN);
+                console.log(`[Bot] ✅ Connected to Discord gateway (standard intents) as ${client.user?.tag || 'ecco\'s girl'}`);
+            } catch (fallbackErr) {
+                console.error('[Bot] Login failed (fallback):', fallbackErr.message);
+            }
+        } else {
+            console.error('[Bot] Could not log into Discord gateway:', err.message);
+        }
+    }
 
     // Initial status channel sync & periodic 60s ticker
     setTimeout(() => syncStatusChannels(client), 5000);
